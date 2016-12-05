@@ -1,0 +1,558 @@
+#!/usr/bin/python2.7
+
+
+import sys
+
+
+"""
+Trabalho da materia de Banco de Dados, segundo semestre de 2016.
+Autor Lucas Silva Martins, GRR20120746, lsm12
+Modo de Executar :
+    make; ./conflito < transactions.txt
+"""
+
+__author__ = 'Lucas Silva Martins'
+__grr__ = 'GRR20120746'
+__version__ = '1.0'
+
+
+class Transaction():
+    """
+    Transaction guarda as principais informacoes de cada transacao:
+    init_time: o tempo em que foi iniciada
+    end_time: tempo do commit (ou da ultima operacao)
+    opers: todas as operacoes dessa transacao
+    """
+    def __init__(self, name):
+        """
+        Construtor de 'Transaction'
+        Parameters
+        ----------
+        name : int
+            Nome da transacao
+        """
+        self.opers = []
+        self.name = name
+        self.init_time = 0
+        self.end_time = 0
+
+    def add_oper(self, oper):
+        """
+        Funcao que adiciona uma operacao a transacao
+
+        Parameters
+        ----------
+        oper : Oper
+            Operacao a ser adicionada
+        """
+        if len(self.opers) == 0:
+            self.init_time = oper.time
+        elif oper.time < self.init_time:
+            self.init_time = oper.time
+        if oper.oper == "C":
+            self.end_time = oper.time
+        self.opers.append(oper)
+
+    def print_transaction(self):
+        """
+        Imprime a transacao
+        """
+        print 'Name -', self.name
+        print 'Init time :', self.init_time
+        print 'Commit time :', self.end_time
+        for op in self.opers:
+            print "\t",
+            op.print_oper()
+
+    def specific_oper(self, op):
+        """
+        Parameters
+        ----------
+        op : string
+            Tipo da operacao ("R", "W", "C")
+
+        Returns
+        -------
+        list
+            Lista de operacoes de tipo <op> da transacao
+        """
+        return filter(lambda w: w.oper == op, self.opers)
+
+    def oper_after_t(self, op, t):
+        """
+        Parameters
+        ----------
+        op : string
+            Tipo da operacao ("R", "W", "C")
+        t: int
+            Tempo que delimita inicio das operacoes
+
+        Returns
+        -------
+        list
+            Lista de operacoes de tipo <op> da transacao apos tempo <t>
+        """
+        return filter(lambda w: w.oper == op and w.time > t, self.opers)
+
+    def oper_before_t(self, op, t):
+        """
+        Parameters
+        ----------
+        op : string
+            Tipo da operacao ("R", "W", "C")
+        t: int
+            Tempo que delimita fim das operacoes
+
+        Returns
+        -------
+        list
+            Lista de operacoes de tipo <op> da transacao antes do tempo <t>
+        """
+        return filter(lambda w: w.oper == op and w.time < t, self.opers)
+
+    def oper_between_t(self, op, t1, t2):
+        """
+        Parameters
+        ----------
+        op : string
+            Tipo da operacao ("R", "W", "C")
+        t1: int
+            Tempo que delimita inicio das operacoes
+        t2: int
+            Tempo que delimita fim das operacoes
+
+        Returns
+        -------
+        list
+            Lista de operacoes de tipo <op> da transacao no periodo de tempo
+            <t1> ate <t2>
+        """
+        return filter(lambda w: w.oper == op and w.time > t1 and w.time < t2,
+                      self.opers)
+
+
+class Operation():
+    """
+    Operation guarda as principais informacoes de cada operacao:
+    attr: atributo que tera interacao
+    oper: tipo da operacao
+    time: tempo que a operacao foi recebida
+    """
+    def __init__(self, oper, attr, time):
+        """
+        Parameters
+        ----------
+        oper : string
+            Tipo da operacao
+        attr: string
+            Nome da variavel
+        time: int
+            Tempo de recebimento da operacao
+        """
+        self.oper = oper
+        self.attr = attr
+        self.time = time
+
+    def print_oper(self):
+        """
+        Imprime a transacao
+        """
+        print 't {} - {} ({})'.format(self.time, self.oper, self.attr)
+
+
+class Graph:
+    def __init__(self):
+        """
+        Grafo ponderado
+        num_Vertexs: o numero de Vertexs
+        Vertexs: lista com todos os Vertexs
+        edges: lista com todas as arestas
+        """
+        self.num_Vertexs = 0
+        self.Vertexs = []
+        self.edges = []
+
+    def add_Vertex(self, name):
+        """
+        Adiciona um Vertex no grafo
+        Parameters
+        ----------
+        name : string
+            Label do Vertex
+        """
+        self.num_Vertexs += 1
+        for i in self.Vertexs:
+            if i.name == name:
+                return
+        v = Vertex(name)
+        self.Vertexs.append(v)
+
+    def add_edge(self, tail, head, weigth=0):
+        """
+        Adiciona uma aresta no grafo
+        Parameters
+        ----------
+        tail : string
+            Label do Vertex de saida
+        head : string
+            Label do Vertex de entrada
+        weigth : int
+            Peso do Vertex, default=0
+        """
+        for e in self.edges:
+            if e.head.name == head and e.tail.name == tail:
+                return
+
+        for v in self.Vertexs:
+            if v.name == head:
+                h = v
+            elif v.name == tail:
+                t = v
+
+        e = Edge(t, h, weigth)
+        self.edges.append(e)
+        t.add_edge(self.edges[-1])
+
+    def dot_graph(self, clean=False):
+        """
+        Imprime o grafo em formato .dot, pode ser visualizado facilmente em
+        http://www.webgraphviz.com/
+
+        Parameters
+        ----------
+        clean : Boolean
+            Se True imprime grafo sem as arestas de peso zero
+        """
+        vs = self.Vertexs
+        print 'digraph G {'
+        print ' ',
+        for v in range(len(vs) - 1):
+            print '{};'.format(vs[v].name),
+        print '{};'.format(vs[-1].name)
+
+        for e in self.edges:
+            e.print_edge(clean)
+        print '}'
+
+    def unmark(self):
+        """
+        Desmarca todos os Vertexs e arestas do grafo
+        """
+        for v in self.Vertexs:
+            v.on_stack = 0
+        for e in self.edges:
+            e.on_stack = 0
+
+    def strongconnect(self, S, v, index, C):
+        """
+        Algoritmo para encontrar componente conexa em um grafo
+        Parameters
+        ----------
+        S : List
+            Pilha que guarda Vertexs visitados, mas que ainda nao teve todos os
+            filhos percorridos
+        v : Vertex
+            Vertice a ser percorrido
+        index : int
+            Indice do nivel do vertice na arvore
+        C: List
+            Lista com ciclos encontrados
+        """
+        v.index = index
+        v.low = index
+        index += 1
+        S.append(v)
+        v.on_stack = True
+
+        # para cada vizinho de v
+        for e in v.out_edges:
+            if e.weigth == 0:
+                continue
+            w = e.head
+            if w.index is None:
+                # w ainda nao foi visitado
+                self.strongconnect(S, w, index, C)
+                v.low = min(v.low, w.low)
+            elif w.on_stack:
+                # w esta em S
+                v.low = min(v.low, w.index)
+        # se v eh raiz
+        if v.low == v.index:
+            comp = []
+            while S:
+                w = S.pop()
+                w.on_stack = False
+                comp.append(w.name)
+                if w == v:
+                    break
+            # remove Vertexs unicos
+            if len(comp) > 1:
+                C.append(comp)
+
+    def tarjan(self):
+        """
+        Tarjan's algorithm, encontra componentes fortemente conexas em
+        um grafo direcionado
+
+        Returns
+        -------
+        list
+            Lista com todos os ciclos encontrados no grafo
+        """
+        index = 0
+        # inicializa pilha
+        S = []
+        # inicializa array de componentes
+        C = []
+        for v in self.Vertexs:
+            # executa o algoritmo para todo Vertex, no caso de grafo
+            # desconexo
+            if v.index is None:
+                self.strongconnect(S, v, index, C)
+        return C
+
+
+class Vertex:
+    """
+    Vertex eh a representacao de cada transacao no Grafo
+    """
+    def __init__(self, name):
+        """
+        Parameters
+        ----------
+        name : string
+            Label do Vertex
+        """
+        self.name = name
+        self.out_edges = []
+        self.on_stack = False
+        self.index = None
+        self.low = None
+
+    def print_Vertex(self):
+        """
+        Imprime o nome do Vertex
+        """
+        print self.name, "visitado: ", self.on_stack
+
+    def add_edge(self, edge):
+        """
+        Adiciona uma aresta ao Vertex, caso ela ainda nao exista
+        """
+        for e in self.out_edges:
+            if e.head.name == edge.head.name:
+                return
+        self.out_edges.append(edge)
+
+
+class Edge:
+    """
+    Vertex eh a representacao de cada relacao entre transacoes
+    """
+    def __init__(self, tail, head, weigth=1):
+        """
+        Parameters
+        ----------
+        tail : string
+            Label do Vertex de entrada
+        head : string
+            Label do Vertex de entrada
+        weigth : int
+            Peso do Vertex, default=1
+        """
+        self.weigth = weigth
+        self.tail = tail
+        self.head = head
+
+    def print_edge(self, clean):
+        """
+        Imprime a aresta, identificando seu peso
+
+        Parameters
+        ----------
+        clean : Boolean
+            Se for true nao imprime arestas de peso zero
+        """
+        if clean and self.weigth == 0:
+            return
+        print '  {} -> {}'.format(self.tail.name, self.head.name),
+        print '[label="{}",'.format(self.weigth),
+        print 'weigth="{}"];'.format(self.weigth)
+
+    def add_weigth(self):
+        """
+        adiciona 1 no peso da aresta
+        """
+        self.weigth += 1
+
+
+def read_file(f):
+    """
+    Le o arquivo de entrada e retorna uma lista com as transacoes identificadas
+
+    Parameters
+    ----------
+    f : file
+
+    Returns
+    -------
+    List
+        Lista com todas as transacoes, e suas respectivas operacoes
+    """
+    ts = {}
+    for line in f:
+        entry = line.rstrip().split(" ")
+        time, trId = int(entry[0]), int(entry[1])
+        op, attr = entry[2], entry[3]
+        oper = Operation(op, attr, time)
+
+        if trId not in ts:
+            ts[trId] = Transaction(trId)
+
+        ts[trId].add_oper(oper)
+    return ts
+
+
+def x_after_y(ti, tj, x, y):
+    """
+    Retorna # de casos que ocorreram de acordo com as operacoes x e y
+
+    Parameters
+    ----------
+    ti : Transaction
+    tj : Transaction
+    x : string
+        Tipo de operacao
+    y : string
+        Tipo de operacao
+
+    Returns
+    -------
+    int
+        Numero de operacoes X que ocorrem em tj depois de cada Y em ti
+    """
+    weigth = 0
+    for o in ti.specific_oper(y):
+        ops = tj.oper_between_t(x, o.time, ti.end_time)
+        weigth += len(filter(lambda x: x.attr == o.attr, ops))
+    return weigth
+
+
+def weigth_ti_tj(ti, tj):
+    """
+        Parameters
+        ----------
+        ti : Transaction
+        tj : Transaction
+
+        Returns
+        -------
+        int
+            Retorna peso da aresta ti->tj, seguindo as regras:
+            +1 para cada r(x) em Tj depois de w(x) em Ti
+            +1 para cada w(x) em Tj depois de r(x) em Ti
+            +1 para cada w(x) em Tj depois de w(x) em Ti
+    """
+    weigth = 0
+    opers = [['R', 'W'], ['W', 'R'], ['W', 'W']]
+
+    for i in opers:
+        weigth += x_after_y(ti, tj, i[0], i[1])
+    return weigth
+
+
+def share_time(ti, tj):
+    """
+    Identifica se as transacoes se intercalam
+
+    Parameters
+    ----------
+    ti : Transaction
+    tj : Transaction
+
+    Returns
+    -------
+    Boolean
+        Retorna true caso o tempo de ti e de tj se intercalarem
+    """
+    if ((ti.init_time < tj.init_time and ti.end_time > tj.init_time) or
+       (tj.init_time < ti.init_time and tj.end_time > ti.init_time)):
+        return True
+    return False
+
+
+def build_graph(ts):
+    """
+    Constroi o grafo que representa as transacoes
+
+    Parameters
+    ----------
+    ts : List<Transaction>
+        Lista com todas as transacoes identificadas no arquivo de entrada
+
+    Returns
+    -------
+    Graph
+        Grafo completo identificando todas as transacoes(Vertices)
+        e as interacoes entre elas (Edges).
+    """
+    g = Graph()
+    for i in ts:
+        g.add_Vertex(ts[i].name)
+    for i in ts:
+        g.add_Vertex(ts[i].name)
+        for j in ts:
+            if i == j:
+                continue
+            w = weigth_ti_tj(ts[i], ts[j])
+            if w > 0:
+                g.add_edge(ts[i].name, ts[j].name, w)
+            # Reconhece transacoes que nao tem dependencia, e as marca com uma
+            # aresta de peso
+            elif share_time(ts[i], ts[j]):
+                g.add_edge(ts[i].name, ts[j].name)
+
+    return g
+
+
+def out_text(graph):
+    """
+    Imprime se as transacoes podem ou nao ser executadas em paralelo
+
+    Parameters
+    ----------
+    g : Graph
+        Grafo que contem todas as transacoes
+    """
+
+    cycles = graph.tarjan()
+
+    i = 1
+    for c in cycles:
+        print i,
+        print ','.join(str(x) for x in c),
+        print 'NAO'
+        i += 1
+
+    done = []
+    for e in graph.edges:
+        if e.weigth == 0:
+            d = False
+            for t in done:
+                if t[0] == e.tail.name and t[1] == e.head.name:
+                    d = True
+            if not d:
+                done.append((e.head.name, e.tail.name))
+                print i,
+                print '{},{} SIM'.format(e.tail.name, e.head.name)
+                i += 1
+
+
+ts = read_file(sys.stdin)
+
+g = build_graph(ts)
+
+# Para imprimir uma formatacao do grafo em .dot descomente a linha a seguir
+# g.dot_graph(clean=False)
+
+out_text(g)

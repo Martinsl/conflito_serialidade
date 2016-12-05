@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<title>Eduardo Almeida's Home Page</title>
+</head>
+<body>
+[<a href="http://www.inf.ufpr.br/eduardo/ensino/ci218/ci218.html">Volta</a>]
+
+<h1>CI 218 - Sistemas de Banco de Dados</h1>
+<h2>Teste de Conflitos de Seriabilidade</h2>
+2016-2
+<p>Entrega: 05/12
+</p><h3>Objetivo:</h3>
+<p>Implementar um algoritmo de teste de processamento concorrente de 
+transações. Este algoritmo ajudará o aluno a compreender gargalos no 
+processamento de transações que motivaram o desenvolvimento de diversos 
+sistemas de processamento distribuído de transações.</p>
+<h3></h3>
+<h3>Algoritmo de teste de seriabilidade quanto ao conflito:</h3>
+<p> </p>
+<ul>
+<li>Crie um nó para cada T do escalonamento S</li>
+<li>Aresta Ti -&gt; Tj para cada r(x) em Tj depois de w(x) em Ti</li>
+<li>Aresta Ti -&gt; Tj para cada w(x) em Tj depois de r(x) em Ti</li>
+<li>Aresta Ti -&gt; Tj para cada w(x) em Tj depois de w(x) em Ti</li>
+<li>S é serial se não existe ciclo no grafo </li>
+</ul>
+<p>Por exemplo:</p>
+<table class="plain" border="1">
+<tbody>
+<tr>
+<th>
+<p>Escalonamento S1</p>
+<p>T1:r(x), T2:r(x), T2:w(x), T1:w(x)</p>
+<p><img src="especificacao_files/S1.jpg" title="" alt="" class="image-inline" width="129" height="63"></p>
+</th><th>
+<p>Escalonamento S2</p>
+<p>T3:r(x), T3:r(y), T4:r(x), T3:w(y)</p>
+<p><img src="especificacao_files/S2.jpg" title="" alt="" class="image-inline" width="147" height="49"></p>
+</th>
+</tr>
+<tr>
+<td>escalonamento não é serial</td>
+<td>escalonamento é serial</td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<h3>Entrada:</h3>
+<p>A entrada deve ser feita pela entrada padrão (<code>stdin</code>). O 
+ arquivo é formado por uma sequência de linhas, onde cada linha  
+representa uma transação chegando. Cada linha tem 4 campos: o primeiro é
+ o  tempo de chegada, o segundo é o identificador da transação, o 
+terceiro é a operação (R=read, W=write, C=commit) e o quarto o atributo 
+que será lido/escrito. Estas linhas estão ordenadas pelo  primeiro campo
+ (tempos menores no início indicando a linha do tempo).</p>
+<h3>Saída:</h3>
+<p>A saída deve ser feita pela saída padrão (<code>stdout</code>). O  
+arquivo será composto por uma sequência de linhas. Uma linha para cada 
+escalonamento. Cada linha tem 3 campos  separados por espaço (um único 
+espaço entre cada par de campos). O  primeiro campo é o identificador do
+ escalonamento. O segundo campo é a lista de transações. E o terceiro é a
+ garantia da seriabilidade ("...<i>determinada execução e a execução serial sempre produzem o mesmo resultado uma da outra</i>." [C.J. Date, 2003]).</p>
+<p>Exemplo de arquivos com uma entrada e uma saída válida:</p>
+<div class="visualClear">
+<table class="plain" border="1">
+<tbody>
+<tr>
+<td>Entrada</td>
+<td>Saída</td>
+</tr>
+<tr>
+<td><b>
+<div class="visualClear" style="text-align: left; ">1 1 R X</div>
+<div class="visualClear" style="text-align: left; "><b>2 2 R X</b></div>
+<div class="visualClear" style="text-align: left; "><b>3 2 W X</b></div>
+<div class="visualClear" style="text-align: left; "><b>4 1 W X</b></div>
+<div class="visualClear" style="text-align: left; "><b>5 2 C -<br></b></div>
+</b><b>
+<div class="visualClear" style="text-align: left; "><b>6 1 C -<br></b></div>
+<div class="visualClear" style="text-align: left; "><b>7 3 R X</b></div>
+<div class="visualClear" style="text-align: left; "><b>8 3 R Y<br></b></div>
+</b><b>
+<div class="visualClear" style="text-align: left; "><b>9 4 R X</b></div>
+<div class="visualClear" style="text-align: left; "><b>10 3 W Y<br></b></div>
+<div class="visualClear" style="text-align: left; "><b>11 4 C -</b><b>
+<div class="visualClear" style="text-align: left; "><b>12 3 C -<br></b></div>
+</b></div>
+</b></td>
+<td>
+<div class="visualClear">1 1,2 NAO</div>
+<div class="visualClear">2 3,4 SIM</div>
+<div class="visualClear">
+<div class="visualClear" style="text-align: left; "></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>Requisitos mínimos:</h2>
+<p>O trabalho deve ser implementado de forma que possa ser compilado e 
+executado nas servidoras de computação do Departamento de Informática.</p>
+<p>O nome do executável deve ser <code>conflito</code>.</p>
+<p>Não deve ter nenhuma opção de linha comando.</p>
+<p> </p>
+<h2>O que deve ser entregue:</h2>
+<p>Além dos arquivos fonte, deve acompanhar um <code>makefile</code> e 
+um relatório com no máximo 2 páginas contendo a documentação sintetizada
+ do sistema implementado. Qualquer particularidade deve estar descrita 
+neste texto, como: algoritmo de detecção de ciclo em grafo.</p>
+<p>Para compilar será usado o comando <code>make</code> (sem nenhum 
+parâmetro), portanto preparem o Makefile para fazer isso mesmo que o 
+programa seja implementado em linguagens interpretadas (e.g., Java).</p>
+<p>Para testar será executado um script como o abaixo.</p>
+<pre>$ ./conflito &lt; teste.in &gt; teste.out
+$ diff teste.sol teste.out
+
+</pre>
+Onde <code>teste.in</code> é o arquivo de entrada do teste e <code>teste.sol</code> é o esperado como saída.<br>
+Caso o teste seja positivo (não imprime nada) será analisado o código fonte e o relatório.<br>
+Os fontes também devem ser comentados para uma possível análise (e.g., Javadoc). 
+<h2>Forma de entrega:</h2>
+<p>O trabalho deve ser empacotado em um arquivo login.tar.gz, onde 
+"login" é uma string com o login do aluno nas servidoras do DInf. Ao 
+descompactar este arquivo deverá ser criado um diretório de nome "login"
+ que conterá todos os demais arquivos. O <code>make</code> e o script acima deverão funcionar dentro deste diretório (não em subdiretórios).</p>
+<p>Este arquivo deve ser enviado por e-mail ao endereço do professor com
+ o assunto "CI218-trab1 " (exatamente).  IMPORTANTE: Minha caixa de 
+email usa o assunto do email como filtro.</p>
+<h2>Equipe:</h2>
+<p>O trabalho é individual.</p>
+
+
+
+
+</body></html>

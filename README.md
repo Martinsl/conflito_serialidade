@@ -1,0 +1,1 @@
+# conflito_serialidade
